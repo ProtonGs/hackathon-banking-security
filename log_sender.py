@@ -63,20 +63,30 @@ PERSONA_ACTIONS = {
         {'url': '/api/auth/login', 'status': 200, 'post_data': 'user=john'}
     ],
     'scanner': [
+        # Path Scanning
         {'url': '/.git/config', 'status': 404, 'post_data': ''},
+        {'url': '/.env', 'status': 404, 'post_data': ''},
+        {'url': '/api/v1/users', 'status': 403, 'post_data': ''},
         {'url': '/admin.php', 'status': 404, 'post_data': ''},
-        {'url': '/api/v1/users', 'status': 404, 'post_data': ''},
-        {'url': '/.env', 'status': 404, 'post_data': ''}
+        # SQLi
+        {'url': "/products?category=1' OR 1=1 --", 'status': 500, 'post_data': ''},
+        # XSS
+        {'url': "/search?q=<script>alert('XSS')</script>", 'status': 200, 'post_data': ''},
     ],
     'brute-force': [
         {'url': '/api/auth/login', 'status': 401, 'post_data': 'user=admin&pass=12345'},
         {'url': '/api/auth/login', 'status': 401, 'post_data': 'user=admin&pass=root'},
-        {'url': '/api/auth/login', 'status': 401, 'post_data': 'user=admin&pass=password'}
+        {'url': '/api/auth/login', 'status': 401, 'post_data': 'user=admin&pass=password'},
+        {'url': '/api/auth/login', 'status': 401, 'post_data': 'user=admin&pass=admin'},
     ],
     'carder': [
-        {'url': '/api/payment/transfer', 'status': 200, 'post_data': '4111111111111112'},
-        {'url': '/api/payment/transfer', 'status': 200, 'post_data': '5555444433332221'},
-        {'url': '/api/payment/transfer', 'status': 200, 'post_data': '4000123456789010'}
+        # Valid Luhn
+        {'url': '/api/payment/transfer', 'status': 200, 'post_data': '49927398716'},
+        # Invalid Luhn
+        {'url': '/api/payment/transfer', 'status': 400, 'post_data': '4111111111111112'},
+        {'url': '/api/payment/transfer', 'status': 400, 'post_data': '5555444433332221'},
+        # XSS in post
+        {'url': '/api/payment/transfer', 'status': 400, 'post_data': '<script>alert(1)</script>'},
     ]
 }
 
