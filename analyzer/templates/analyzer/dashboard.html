@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fixit v3 - Professional Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root { --bg-color: #f0f2f5; --card-bg: #fff; --text-color: #1d2129; --text-secondary: #606770; --accent-color: #007bff; --danger-color: #dc3545; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background-color: var(--bg-color); color: var(--text-color); margin: 0; padding: 24px; }
+        .main-grid { display: grid; grid-template-columns: repeat(4, 1fr); grid-template-rows: auto auto auto; gap: 20px; }
+        .header { grid-column: 1 / -1; }
+        .kpi-card { background: var(--card-bg); padding: 20px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); cursor: pointer; transition: transform 0.2s, box-shadow 0.2s; }
+        .kpi-card:hover { transform: translateY(-4px); box-shadow: 0 6px 16px rgba(0,0,0,0.12); }
+        .kpi-card h3 { margin: 0 0 8px; font-size: 16px; color: var(--text-secondary); }
+        .kpi-card .value { font-size: 32px; font-weight: 600; color: var(--text-color); }
+        .kpi-card .insight { font-size: 13px; color: var(--accent-color); margin-top: 10px; min-height: 2em; }
+        .chart-container { background: var(--card-bg); padding: 20px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
+        #threat-chart-container { grid-column: 1 / 3; }
+        #anomaly-chart-container { grid-column: 3 / 5; }
+        #country-chart-container { grid-column: 1 / 3; }
+        #speed-chart-container { grid-column: 3 / 4; }
+        #log-feed-container { grid-column: 4 / 5; background: #1d2129; color: #e0e0e0; padding: 20px; border-radius: 12px; font-family: monospace; font-size: 12px; display: flex; flex-direction: column; }
+        #log-feed-container h3 { margin: 0 0 10px; color: #fff; }
+        #log-feed { flex-grow: 1; overflow-y: auto; }
+        #log-feed p { margin: 0 0 5px; white-space: pre; }
+        /* Modal Styles */
+        .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.5); }
+        .modal-content { background-color: #fefefe; margin: 10% auto; padding: 20px; border: 1px solid #888; width: 80%; max-width: 600px; border-radius: 12px; }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #ddd; padding-bottom: 10px; margin-bottom: 15px; }
+        .modal-header h2 { margin: 0; }
+        .close-btn { color: #aaa; font-size: 28px; font-weight: bold; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <div class="main-grid">
+        <div class="header"><h1>Fixit v3: Professional Threat Dashboard</h1></div>
+        
+        <div class="kpi-card" id="kpi-card-requests"><h3>Total Requests (24h)</h3><div class="value" id="kpi-total-requests">-</div><p class="insight" id="insight-requests"></p></div>
+        <div class="kpi-card" id="kpi-card-blocked"><h3>Blocked IPs</h3><div class="value" id="kpi-blocked-ips">-</div><p class="insight" id="insight-blocked"></p></div>
+        <div class="kpi-card" id="kpi-card-urls"><h3>Top Attacked URL</h3><div class="value" id="kpi-top-url" style="font-size: 20px;">-</div><p class="insight" id="insight-urls"></p></div>
+        <div class="kpi-card" id="kpi-card-countries"><h3>Top Attacking Country</h3><div class="value" id="kpi-top-country">-</div><p class="insight" id="insight-countries"></p></div>
+
+        <div class="chart-container" id="threat-chart-container"><canvas id="threat-over-time-chart"></canvas></div>
+        <div class="chart-container" id="anomaly-chart-container"><canvas id="anomaly-types-chart"></canvas></div>
+        <div class="chart-container" id="country-chart-container"><canvas id="requests-by-country-chart"></canvas></div>
+        <div class="chart-container" id="speed-chart-container"><canvas id="avg-request-time-chart"></canvas></div>
+        
+        <div id="log-feed-container"><h3>Live Log Feed</h3><div id="log-feed"></div></div>
+    </div>
+
+    <!-- Modal -->
+    <div id="details-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header"><h2 id="modal-title">Details</h2><span class="close-btn">&times;</span></div>
+            <div id="modal-body"></div>
+        </div>
+    </div>
+
+<script>
+    const csrfToken = '{{ csrf_token }}';
+    let apiDataCache = {}; // Cache for modal data
+    let chartInstances = {}; // To hold all chart objects
+
+    function initializeCharts() {
+        const chartsToInit = {
+            threat: { id: 'threat-over-time-chart', type: 'line', options: { responsive: true, plugins: { title: { display: true, text: 'Уровень угрозы во времени' } } } },
+            anomaly: { id: 'anomaly-types-chart', type: 'doughnut', options: { responsive: true, plugins: { title: { display: true, text: 'Типы аномалий' } } } },
+            country: { id: 'requests-by-country-chart', type: 'bar', options: { indexAxis: 'y', responsive: true, plugins: { title: { display: true, text: 'Топ-10 стран по запросам' } } } },
+            speed: { id: 'avg-request-time-chart', type: 'bar', options: { responsive: true, plugins: { title: { display: true, text: 'Скорость (мс): Человек vs Бот' } } } }
+        };
+        for (const key in chartsToInit) {
+            const ctx = document.getElementById(chartsToInit[key].id).getContext('2d');
+            chartInstances[key] = new Chart(ctx, { type: chartsToInit[key].type, options: chartsToInit[key].options });
+        }
+    }
+
+    function updateDashboard() {
+        fetch('{% url "analyzer:dashboard_data" %}')
+            .then(response => response.json())
+            .then(data => {
+                apiDataCache = data; // Cache all data
+                updateKpis(data.kpis);
+                updateCharts(data.charts);
+                updateLogFeed(data.live_logs);
+            });
+    }
+
+    function updateKpis(kpis) {
+        document.getElementById('kpi-total-requests').textContent = kpis.total_requests;
+        document.getElementById('kpi-blocked-ips').textContent = kpis.blocked_ips_count;
+        document.getElementById('kpi-top-url').textContent = kpis.top_attacked_urls.length ? kpis.top_attacked_urls[0].attacked_url : 'N/A';
+        document.getElementById('kpi-top-country').textContent = kpis.top_countries.length ? kpis.top_countries[0].threat_source__country : 'N/A';
+        // AI insights can be fetched here as before if needed
+    }
+
+    function updateCharts(charts) {
+        // Threat over time
+        chartInstances.threat.data.labels = charts.threat_over_time.map(d => new Date(d.minute).toLocaleTimeString());
+        chartInstances.threat.data.datasets = [{ label: 'Суммарный уровень угрозы', data: charts.threat_over_time.map(d => d.total_score), borderColor: '#dc3545', fill: false, tension: 0.2 }];
+        chartInstances.threat.update();
+
+        // Anomaly types
+        chartInstances.anomaly.data.labels = charts.anomaly_types.map(d => d.reason);
+        chartInstances.anomaly.data.datasets = [{ data: charts.anomaly_types.map(d => d.count), backgroundColor: ['#ff6384', '#36a2eb', '#ffce56', '#4bc0c0', '#9966ff', '#ff9f40'] }];
+        chartInstances.anomaly.update();
+
+        // Requests by country
+        chartInstances.country.data.labels = charts.requests_by_country.map(d => d.country);
+        chartInstances.country.data.datasets = [{ label: 'Всего запросов', data: charts.requests_by_country.map(d => d.count), backgroundColor: '#36a2eb' }];
+        chartInstances.country.update();
+
+        // Avg request time
+        chartInstances.speed.data.labels = ['Человек', 'Бот'];
+        chartInstances.speed.data.datasets = [{ label: 'Среднее время (мс)', data: [charts.avg_request_time.human, charts.avg_request_time.bot], backgroundColor: ['#4bc0c0', '#ff6384'] }];
+        chartInstances.speed.update();
+    }
+
+    function updateLogFeed(logs) {
+        const feed = document.getElementById('log-feed');
+        feed.innerHTML = logs.map(log => `<p><span style="color:#888">${log.timestamp}</span> <span style="color:#ffce56">${log.country}</span> ${log.ip_address} <span style="color:#4bc0c0">${log.url}</span></p>`).join('');
+    }
+
+    // --- Modal Logic ---
+    const modal = document.getElementById('details-modal');
+    const modalTitle = document.getElementById('modal-title');
+    const modalBody = document.getElementById('modal-body');
+    document.querySelector('.close-btn').onclick = () => modal.style.display = "none";
+    window.onclick = (event) => { if (event.target == modal) { modal.style.display = "none"; } };
+
+    function openModal(title, content) {
+        modalTitle.textContent = title;
+        modalBody.innerHTML = content;
+        modal.style.display = "block";
+    }
+
+    document.getElementById('kpi-card-blocked').addEventListener('click', () => {
+        const data = apiDataCache.modal_data.blocked_ips;
+        let content = '<table><thead><tr><th>IP</th><th>Country</th><th>Score</th></tr></thead><tbody>';
+        data.forEach(ip => { content += `<tr><td>${ip.ip_address}</td><td>${ip.country}</td><td>${ip.threat_score}</td></tr>`; });
+        content += '</tbody></table>';
+        openModal('Заблокированные IP-адреса', content);
+    });
+
+    document.getElementById('kpi-card-urls').addEventListener('click', () => {
+        const data = apiDataCache.kpis.top_attacked_urls;
+        let content = '<table><thead><tr><th>URL</th><th>Count</th></tr></thead><tbody>';
+        data.forEach(url => { content += `<tr><td>${url.attacked_url}</td><td>${url.count}</td></tr>`; });
+        content += '</tbody></table>';
+        openModal('Топ-5 атакуемых URL', content);
+    });
+    
+    document.getElementById('kpi-card-countries').addEventListener('click', () => {
+        const data = apiDataCache.kpis.top_countries;
+        let content = '<table><thead><tr><th>Country</th><th>Anomalies</th></tr></thead><tbody>';
+        data.forEach(c => { content += `<tr><td>${c.threat_source__country}</td><td>${c.count}</td></tr>`; });
+        content += '</tbody></table>';
+        openModal('Топ-5 стран-источников атак', content);
+    });
+
+
+    // --- Initial Load ---
+    document.addEventListener('DOMContentLoaded', () => {
+        initializeCharts();
+        updateDashboard();
+        setInterval(updateDashboard, 5000); // Update every 5 seconds
+    });
+</script>
+</body>
+</html>
