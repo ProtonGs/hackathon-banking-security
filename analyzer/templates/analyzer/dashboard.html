@@ -6,24 +6,28 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Fixit v3 - Professional Dashboard</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <link rel="stylesheet" href="{% static 'analyzer/css/dashboard.css' %}">
 </head>
 <body>
     <div class="main-grid">
         <div class="header">
             <h1>Fixit v3: Professional Threat Dashboard</h1>
-            <button id="generate-report-btn" class="action-btn">Сделать общий отчет по кибербезопасности</button>
+            <div>
+                <button id="generate-all-btn" class="action-btn secondary">Сгенерировать все анализы</button>
+                <button id="generate-report-btn" class="action-btn">Сделать общий отчет</button>
+            </div>
         </div>
         
-        <div class="kpi-card" id="kpi-card-requests"><h3>Total Requests (24h)</h3><div class="value" id="kpi-total-requests">-</div><p class="insight" id="insight-requests"></p><button class="ai-btn" data-widget-id="kpi-card-requests" data-analysis-type="kpi_requests">Анализ ИИ</button></div>
-        <div class="kpi-card" id="kpi-card-blocked"><h3>Blocked IPs</h3><div class="value" id="kpi-blocked-ips">-</div><p class="insight" id="insight-blocked"></p><button class="ai-btn" data-widget-id="kpi-card-blocked" data-analysis-type="kpi_blocked">Анализ ИИ</button></div>
-        <div class="kpi-card" id="kpi-card-urls"><h3>Top Attacked URL</h3><div class="value" id="kpi-top-url" style="font-size: 20px;">-</div><p class="insight" id="insight-urls"></p><button class="ai-btn" data-widget-id="kpi-card-urls" data-analysis-type="kpi_urls">Анализ ИИ</button></div>
-        <div class="kpi-card" id="kpi-card-countries"><h3>Top Attacking Country</h3><div class="value" id="kpi-top-country">-</div><p class="insight" id="insight-countries"></p><button class="ai-btn" data-widget-id="kpi-card-countries" data-analysis-type="kpi_countries">Анализ ИИ</button></div>
+        <div class="kpi-card" id="kpi-card-requests"><h3>Total Requests (24h)</h3><div class="value" id="kpi-total-requests">-</div><p class="insight" id="insight-requests"></p><button class="ai-btn" data-widget-id="kpi-card-requests" data-chart-id="" data-analysis-type="kpi_requests">Анализ ИИ</button></div>
+        <div class="kpi-card" id="kpi-card-blocked"><h3>Blocked IPs</h3><div class="value" id="kpi-blocked-ips">-</div><p class="insight" id="insight-blocked"></p><button class="ai-btn" data-widget-id="kpi-card-blocked" data-chart-id="" data-analysis-type="kpi_blocked">Анализ ИИ</button></div>
+        <div class="kpi-card" id="kpi-card-urls"><h3>Top Attacked URL</h3><div class="value" id="kpi-top-url" style="font-size: 20px;">-</div><p class="insight" id="insight-urls"></p><button class="ai-btn" data-widget-id="kpi-card-urls" data-chart-id="" data-analysis-type="kpi_urls">Анализ ИИ</button></div>
+        <div class="kpi-card" id="kpi-card-countries"><h3>Top Attacking Country</h3><div class="value" id="kpi-top-country">-</div><p class="insight" id="insight-countries"></p><button class="ai-btn" data-widget-id="kpi-card-countries" data-chart-id="" data-analysis-type="kpi_countries">Анализ ИИ</button></div>
 
-        <div class="chart-container" id="threat-chart-container"><canvas id="threat-over-time-chart"></canvas><button class="ai-btn" data-widget-id="threat-chart-container" data-analysis-type="chart_threat">Анализ ИИ</button></div>
-        <div class="chart-container" id="anomaly-chart-container"><canvas id="anomaly-types-chart"></canvas><button class="ai-btn" data-widget-id="anomaly-chart-container" data-analysis-type="chart_anomaly">Анализ ИИ</button></div>
-        <div class="chart-container" id="country-chart-container"><canvas id="requests-by-country-chart"></canvas><button class="ai-btn" data-widget-id="country-chart-container" data-analysis-type="chart_country">Анализ ИИ</button></div>
-        <div class="chart-container" id="speed-chart-container"><canvas id="avg-request-time-chart"></canvas><button class="ai-btn" data-widget-id="speed-chart-container" data-analysis-type="chart_speed">Анализ ИИ</button></div>
+        <div class="chart-container" id="threat-chart-container"><canvas id="threat-over-time-chart"></canvas><button class="ai-btn" data-widget-id="threat-chart-container" data-chart-id="threat" data-analysis-type="chart_threat">Анализ ИИ</button></div>
+        <div class="chart-container" id="anomaly-chart-container"><canvas id="anomaly-types-chart"></canvas><button class="ai-btn" data-widget-id="anomaly-chart-container" data-chart-id="anomaly" data-analysis-type="chart_anomaly">Анализ ИИ</button></div>
+        <div class="chart-container" id="country-chart-container"><canvas id="requests-by-country-chart"></canvas><button class="ai-btn" data-widget-id="country-chart-container" data-chart-id="country" data-analysis-type="chart_country">Анализ ИИ</button></div>
+        <div class="chart-container" id="speed-chart-container"><canvas id="avg-request-time-chart"></canvas><button class="ai-btn" data-widget-id="speed-chart-container" data-chart-id="speed" data-analysis-type="chart_speed">Анализ ИИ</button></div>
         
         <div id="log-feed-container"><h3>Live Log Feed</h3><div id="log-feed"></div></div>
     </div>
@@ -44,8 +48,13 @@
                 <span class="close-btn ai-close-btn">&times;</span>
             </div>
             <div id="ai-modal-body" class="ai-modal-body">
-                <div id="ai-modal-widget-container"></div>
-                <div id="ai-modal-analysis-container"></div>
+                <div id="ai-modal-widget-container">
+                    <canvas id="ai-modal-chart" style="display: none;"></canvas>
+                </div>
+                <div id="ai-modal-analysis-container">
+                    <div id="ai-analysis-content"></div>
+                    <button id="regenerate-ai-btn" class="regenerate-btn">Перегенерировать</button>
+                </div>
             </div>
         </div>
     </div>
