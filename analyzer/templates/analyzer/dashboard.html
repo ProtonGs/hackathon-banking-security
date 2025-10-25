@@ -10,12 +10,17 @@
     <link rel="stylesheet" href="{% static 'analyzer/css/dashboard.css' %}">
 </head>
 <body>
+    <div id="ai-analyses-data" style="display: none;">{{ ai_analyses|json_script:"ai-analyses-json" }}</div>
     <div class="main-grid">
         <div class="header">
             <h1>Fixit v3: Professional Threat Dashboard</h1>
             <div>
                 <button id="generate-all-btn" class="action-btn secondary">Сгенерировать все анализы</button>
                 <button id="generate-report-btn" class="action-btn">Сделать общий отчет</button>
+                <form action="{% url 'analyzer:reset_blocked_ips' %}" method="post" style="display: inline;">
+                    {% csrf_token %}
+                    <button type="submit" class="action-btn danger">Разбанить все IP</button>
+                </form>
             </div>
         </div>
         

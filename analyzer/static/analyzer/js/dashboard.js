@@ -4,6 +4,29 @@ let aiReportCache = {};
 let modalChartInstance;
 let currentAnalysisInfo = {};
 
+function loadInitialAiAnalyses() {
+    try {
+        const analysisDataElement = document.getElementById('ai-analyses-json');
+        if (analysisDataElement) {
+            const analyses = JSON.parse(analysisDataElement.textContent);
+            aiReportCache = analyses;
+            // Pre-fill insights on the dashboard
+            for (const [key, value] of Object.entries(analyses)) {
+                const insightElement = document.querySelector(`[data-analysis-type='${key}']`);
+                if (insightElement && value) {
+                    const parentCard = insightElement.closest('.kpi-card, .chart-container');
+                    if (parentCard) {
+                        // Ensure the button is marked as having a report
+                        insightElement.classList.add('has-report');
+                    }
+                }
+            }
+        }
+    } catch (e) {
+        console.error("Error loading initial AI analyses:", e);
+    }
+}
+
 function initializeCharts() {
     const chartsToInit = {
         threat: { id: 'threat-over-time-chart', type: 'line', options: { responsive: true, maintainAspectRatio: false, plugins: { title: { display: true, text: 'Уровень угрозы во времени' } } } },
@@ -210,6 +233,7 @@ function setupEventListeners() {
 
 // --- Initial Load ---
 document.addEventListener('DOMContentLoaded', () => {
+    loadInitialAiAnalyses();
     initializeCharts();
     setupModals();
     setupEventListeners();

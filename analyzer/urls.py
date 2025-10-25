@@ -8,4 +8,5 @@ urlpatterns = [
     path('api/dashboard-data/', views.dashboard_data, name='dashboard_data'),
     path('api/kpi-insights/', views.generate_kpi_insights, name='generate_kpi_insights'),
     path('api/deep-analysis/', views.generate_deep_analysis, name='generate_deep_analysis'),
+    path('api/reset-blocked-ips/', views.reset_blocked_ips, name='reset_blocked_ips'),
 ]

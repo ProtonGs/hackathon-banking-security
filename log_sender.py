@@ -5,16 +5,38 @@ import random
 API_ENDPOINT = 'http://127.0.0.1:8000/api/logs/'
 
 IPS = {
+    # Scanners
     '81.200.150.1': {'country': 'RU', 'persona': 'scanner'},
     '203.0.113.55': {'country': 'CN', 'persona': 'scanner'},
-    '198.51.100.12': {'country': 'US', 'persona': 'brute-force'},
+    '198.51.100.12': {'country': 'US', 'persona': 'scanner'},
+    '5.188.210.101': {'country': 'DE', 'persona': 'scanner'},
+    '45.9.20.157': {'country': 'NL', 'persona': 'scanner'},
+
+    # Brute-force
     '203.0.113.10': {'country': 'CN', 'persona': 'brute-force'},
+    '185.220.101.43': {'country': 'UA', 'persona': 'brute-force'},
+    '194.32.76.119': {'country': 'GB', 'persona': 'brute-force'},
+    '103.195.4.21': {'country': 'IN', 'persona': 'brute-force'},
+    '181.214.87.4': {'country': 'BR', 'persona': 'brute-force'},
+
+    # Carders
     '185.143.223.5': {'country': 'NL', 'persona': 'carder'},
     '91.219.212.2': {'country': 'RU', 'persona': 'carder'},
+    '198.49.23.141': {'country': 'US', 'persona': 'carder'},
+    '179.107.18.1': {'country': 'BR', 'persona': 'carder'},
+    '103.86.124.1': {'country': 'ID', 'persona': 'carder'},
+
+    # Normal users
     '8.8.8.8': {'country': 'US', 'persona': 'normal'},
     '1.1.1.1': {'country': 'AU', 'persona': 'normal'},
     '91.108.23.10': {'country': 'GB', 'persona': 'normal'},
     '195.8.215.1': {'country': 'DE', 'persona': 'normal'},
+    '200.10.10.1': {'country': 'MX', 'persona': 'normal'},
+    '152.58.10.1': {'country': 'FR', 'persona': 'normal'},
+    '139.130.4.5': {'country': 'JP', 'persona': 'normal'},
+    '88.198.10.1': {'country': 'ES', 'persona': 'normal'},
+    '62.116.10.1': {'country': 'IT', 'persona': 'normal'},
+    '212.102.32.1': {'country': 'PL', 'persona': 'normal'},
 }
 
 USER_AGENTS = {

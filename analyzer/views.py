@@ -4,13 +4,14 @@ import logging
 import google.generativeai as genai
 from datetime import timedelta
 from django.utils import timezone
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponseRedirect
 from django.shortcuts import render
+from django.urls import reverse
 from django.views.decorators.csrf import csrf_exempt
 from django.contrib.auth.decorators import login_required
 from django.db.models import Count, Sum, Avg
 from django.db.models.functions import TruncMinute
-from .models import ThreatSource, Anomaly, LogEntry
+from .models import ThreatSource, Anomaly, LogEntry, AIAnalysis
 from .services import analyze_log_entry
 
 logger = logging.getLogger(__name__)
@@ -28,7 +29,11 @@ def log_receiver(request):
 
 @login_required
 def dashboard(request):
-    return render(request, 'analyzer/dashboard.html')
+    analyses = AIAnalysis.objects.all()
+    context = {
+        'ai_analyses': {analysis.widget_key: analysis.analysis_text for analysis in analyses}
+    }
+    return render(request, 'analyzer/dashboard.html', context)
 
 @login_required
 def dashboard_data(request):
@@ -131,8 +136,22 @@ def generate_deep_analysis(request):
         
         request_options = {"timeout": 30} # Increased timeout
         response = model.generate_content(prompt, request_options=request_options)
+
+        # Save the analysis to the database
+        AIAnalysis.objects.update_or_create(
+            widget_key=analysis_type,
+            defaults={'analysis_text': response.text}
+        )
+
         return JsonResponse({"report": response.text})
     
     except Exception as e:
         logger.error(f"Error in generate_deep_analysis (type: {analysis_type}): {e}")
         return JsonResponse({"error": f"AI analysis failed: {e}"}, status=500)
+
+@login_required
+def reset_blocked_ips(request):
+    if request.method == 'POST':
+        ThreatSource.objects.filter(status='blocked').update(status='active', threat_score=0)
+        return HttpResponseRedirect(reverse('analyzer:dashboard'))
+    return HttpResponseRedirect(reverse('analyzer:dashboard'))
