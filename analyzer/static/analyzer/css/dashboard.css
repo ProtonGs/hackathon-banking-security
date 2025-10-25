@@ -1,0 +1,31 @@
+:root { --bg-color: #f0f2f5; --card-bg: #fff; --text-color: #1d2129; --text-secondary: #606770; --accent-color: #007bff; --danger-color: #dc3545; }
+body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background-color: var(--bg-color); color: var(--text-color); margin: 0; padding: 24px; }
+.main-grid { display: grid; grid-template-columns: repeat(4, 1fr); grid-template-rows: auto auto auto; gap: 20px; }
+.header { grid-column: 1 / -1; display: flex; justify-content: space-between; align-items: center; }
+.kpi-card { position: relative; background: var(--card-bg); padding: 20px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); cursor: pointer; transition: transform 0.2s, box-shadow 0.2s; padding-bottom: 50px; }
+.kpi-card:hover { transform: translateY(-4px); box-shadow: 0 6px 16px rgba(0,0,0,0.12); }
+.kpi-card h3 { margin: 0 0 8px; font-size: 16px; color: var(--text-secondary); }
+.kpi-card .value { font-size: 32px; font-weight: 600; color: var(--text-color); }
+.kpi-card .insight { font-size: 13px; color: var(--accent-color); margin-top: 10px; min-height: 2em; }
+.chart-container { position: relative; background: var(--card-bg); padding: 20px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); padding-bottom: 50px; }
+#threat-chart-container { grid-column: 1 / 3; }
+#anomaly-chart-container { grid-column: 3 / 5; }
+#country-chart-container { grid-column: 1 / 3; }
+#speed-chart-container { grid-column: 3 / 4; }
+#log-feed-container { grid-column: 4 / 5; background: #1d2129; color: #e0e0e0; padding: 20px; border-radius: 12px; font-family: monospace; font-size: 12px; display: flex; flex-direction: column; }
+#log-feed-container h3 { margin: 0 0 10px; color: #fff; }
+#log-feed { flex-grow: 1; overflow-y: auto; }
+#log-feed p { margin: 0 0 5px; white-space: pre; }
+.action-btn { background-color: var(--accent-color); color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-size: 14px; font-weight: 600; }
+.ai-btn { position: absolute; bottom: 10px; right: 10px; background-color: #6c757d; color: white; border: none; padding: 5px 10px; border-radius: 6px; cursor: pointer; font-size: 12px; }
+/* Modal Styles */
+.modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.6); backdrop-filter: blur(5px); }
+.modal-content { background-color: var(--card-bg); margin: 5% auto; padding: 20px; border: none; width: 80%; max-width: 600px; border-radius: 12px; box-shadow: 0 8px 30px rgba(0,0,0,0.2); }
+.modal-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #ddd; padding-bottom: 10px; margin-bottom: 15px; }
+.modal-header h2 { margin: 0; }
+.close-btn { color: #aaa; font-size: 28px; font-weight: bold; cursor: pointer; }
+/* AI Modal Specifics */
+.ai-modal-content { max-width: 1000px; }
+.ai-modal-body { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; align-items: start; }
+#ai-modal-widget-container .chart-container, #ai-modal-widget-container .kpi-card { transform: scale(0.95); box-shadow: none; cursor: default; }
+#ai-modal-analysis-container { padding-top: 20px; }
