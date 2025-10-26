@@ -59,8 +59,8 @@ def dashboard_data(request):
     threat_over_time = Anomaly.objects.filter(timestamp__gte=last_24_hours).annotate(minute=TruncMinute('timestamp')).values('minute').annotate(total_score=Sum('score_added')).order_by('minute')
     anomaly_types = Anomaly.objects.filter(timestamp__gte=last_24_hours).values('reason').annotate(count=Count('id')).order_by('-count')
     requests_by_country = LogEntry.objects.filter(timestamp__gte=last_24_hours).values('country').annotate(count=Count('id')).order_by('-count')[:10]
-    avg_time_bot = LogEntry.objects.filter(threat_source__anomalies__isnull=False, time_delta_ms__isnull=False).aggregate(avg=Avg('time_delta_ms'))['avg'] or 0
-    avg_time_human = LogEntry.objects.filter(threat_source__anomalies__isnull=True, time_delta_ms__isnull=False).aggregate(avg=Avg('time_delta_ms'))['avg'] or 0
+    avg_time_bot = LogEntry.objects.filter(threat_source__threat_score__gte=20, time_delta_ms__isnull=False).aggregate(avg=Avg('time_delta_ms'))['avg'] or 0
+    avg_time_human = LogEntry.objects.filter(threat_source__threat_score__lt=20, time_delta_ms__isnull=False).aggregate(avg=Avg('time_delta_ms'))['avg'] or 0
     
     charts = {
         'threat_over_time': list(threat_over_time),

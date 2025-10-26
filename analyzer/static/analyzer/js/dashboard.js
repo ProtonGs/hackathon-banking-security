@@ -141,26 +141,62 @@ function openAiModal(widgetId, chartId, analysisType) {
     const widgetContainer = document.getElementById('ai-modal-widget-container');
     const modalChartCanvas = document.getElementById('ai-modal-chart');
     
-    Array.from(widgetContainer.children).forEach(child => {
-        if (child.id !== 'ai-modal-chart') widgetContainer.removeChild(child);
-    });
+    // Clear previous content
+    widgetContainer.innerHTML = ''; 
+    widgetContainer.appendChild(modalChartCanvas); // Keep the canvas
 
     if (modalChartInstance) {
         modalChartInstance.destroy();
         modalChartInstance = null;
     }
 
-    if (analysisType === 'final_summary') {
+    const listWidgets = { // New: Define widgets that need a list view
+        'kpi_blocked': {
+            title: 'Заблокированные IP-адреса',
+            data: apiDataCache.modal_data?.blocked_ips,
+            formatter: (item) => `<li>${item.ip_address} (${item.country || 'N/A'}) - Score: ${item.threat_score}</li>`
+        },
+        'kpi_urls': {
+            title: 'Топ атакуемых URL',
+            data: apiDataCache.kpis?.top_attacked_urls,
+            formatter: (item) => `<li>${item.attacked_url} (${item.count} times)</li>`
+        },
+        'kpi_countries': {
+            title: 'Топ атакующих стран',
+            data: apiDataCache.kpis?.top_countries,
+            formatter: (item) => `<li>${item.threat_source__country} (${item.count} times)</li>`
+        }
+    };
+
+    if (analysisType in listWidgets) {
+        const config = listWidgets[analysisType];
+        document.getElementById('ai-modal-title').textContent = `Анализ: ${config.title}`;
+        modalChartCanvas.style.display = 'none';
+        
+        let content = `<h3>${config.title} (до 10)</h3>`;
+        if (config.data && config.data.length > 0) {
+            content += '<ul>';
+            config.data.slice(0, 10).forEach(item => {
+                content += config.formatter(item);
+            });
+            content += '</ul>';
+        } else {
+            content += '<p>Нет данных для отображения.</p>';
+        }
+        widgetContainer.innerHTML = content;
+
+    } else if (analysisType === 'final_summary') {
         document.getElementById('ai-modal-title').textContent = "Общий отчет по кибербезопасности";
         widgetContainer.innerHTML = '<h2>Общий отчет</h2><p>На основе всех сгенерированных анализов.</p>';
         modalChartCanvas.style.display = 'none';
     } else if (chartId && chartInstances[chartId]) {
-        document.getElementById('ai-modal-title').textContent = "Анализ от ИИ";
+        document.getElementById('ai-modal-title').textContent = "Анализ графика";
         modalChartCanvas.style.display = 'block';
         const originalChart = chartInstances[chartId];
         modalChartInstance = new Chart(modalChartCanvas.getContext('2d'), originalChart.config);
+        widgetContainer.prepend(modalChartCanvas);
     } else {
-        document.getElementById('ai-modal-title').textContent = "Анализ от ИИ";
+        document.getElementById('ai-modal-title').textContent = "Анализ виджета";
         modalChartCanvas.style.display = 'none';
         const widgetElement = document.getElementById(widgetId).cloneNode(true);
         widgetElement.querySelector('.ai-btn').remove();
