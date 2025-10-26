@@ -149,8 +149,11 @@ def generate_deep_analysis(request):
         return JsonResponse({"error": f"AI analysis failed: {e}"}, status=500)
 
 @login_required
-def reset_blocked_ips(request):
+def reset_all_data(request):
     if request.method == 'POST':
-        ThreatSource.objects.filter(status='blocked').update(status='active', threat_score=0)
+        LogEntry.objects.all().delete()
+        Anomaly.objects.all().delete()
+        ThreatSource.objects.all().delete()
+        AIAnalysis.objects.all().delete()
         return HttpResponseRedirect(reverse('analyzer:dashboard'))
     return HttpResponseRedirect(reverse('analyzer:dashboard'))

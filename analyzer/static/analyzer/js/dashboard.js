@@ -138,19 +138,20 @@ function fetchAndRenderAiAnalysis(analysisType, forceRegenerate = false) {
 function openAiModal(widgetId, chartId, analysisType) {
     currentAnalysisInfo = { widgetId, chartId, analysisType };
     const aiModal = document.getElementById('ai-modal');
-    const widgetContainer = document.getElementById('ai-modal-widget-container');
+    const listContainer = document.getElementById('ai-modal-list-container');
     const modalChartCanvas = document.getElementById('ai-modal-chart');
     
-    // Clear previous content
-    widgetContainer.innerHTML = ''; 
-    widgetContainer.appendChild(modalChartCanvas); // Keep the canvas
+    // Clear previous dynamic content and hide containers
+    listContainer.innerHTML = '';
+    listContainer.style.display = 'none';
+    modalChartCanvas.style.display = 'none';
 
     if (modalChartInstance) {
         modalChartInstance.destroy();
         modalChartInstance = null;
     }
 
-    const listWidgets = { // New: Define widgets that need a list view
+    const listWidgets = {
         'kpi_blocked': {
             title: 'Заблокированные IP-адреса',
             data: apiDataCache.modal_data?.blocked_ips,
@@ -171,7 +172,7 @@ function openAiModal(widgetId, chartId, analysisType) {
     if (analysisType in listWidgets) {
         const config = listWidgets[analysisType];
         document.getElementById('ai-modal-title').textContent = `Анализ: ${config.title}`;
-        modalChartCanvas.style.display = 'none';
+        listContainer.style.display = 'block';
         
         let content = `<h3>${config.title} (до 10)</h3>`;
         if (config.data && config.data.length > 0) {
@@ -183,24 +184,23 @@ function openAiModal(widgetId, chartId, analysisType) {
         } else {
             content += '<p>Нет данных для отображения.</p>';
         }
-        widgetContainer.innerHTML = content;
+        listContainer.innerHTML = content;
 
     } else if (analysisType === 'final_summary') {
         document.getElementById('ai-modal-title').textContent = "Общий отчет по кибербезопасности";
-        widgetContainer.innerHTML = '<h2>Общий отчет</h2><p>На основе всех сгенерированных анализов.</p>';
-        modalChartCanvas.style.display = 'none';
+        listContainer.style.display = 'block';
+        listContainer.innerHTML = '<h2>Общий отчет</h2><p>На основе всех сгенерированных анализов.</p>';
     } else if (chartId && chartInstances[chartId]) {
         document.getElementById('ai-modal-title').textContent = "Анализ графика";
         modalChartCanvas.style.display = 'block';
         const originalChart = chartInstances[chartId];
         modalChartInstance = new Chart(modalChartCanvas.getContext('2d'), originalChart.config);
-        widgetContainer.prepend(modalChartCanvas);
     } else {
         document.getElementById('ai-modal-title').textContent = "Анализ виджета";
-        modalChartCanvas.style.display = 'none';
+        listContainer.style.display = 'block';
         const widgetElement = document.getElementById(widgetId).cloneNode(true);
         widgetElement.querySelector('.ai-btn').remove();
-        widgetContainer.prepend(widgetElement);
+        listContainer.appendChild(widgetElement);
     }
 
     aiModal.style.display = 'block';

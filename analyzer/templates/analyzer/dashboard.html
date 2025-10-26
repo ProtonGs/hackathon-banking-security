@@ -17,9 +17,9 @@
             <div>
                 <button id="generate-all-btn" class="action-btn secondary">Сгенерировать все анализы</button>
                 <button id="generate-report-btn" class="action-btn">Сделать общий отчет</button>
-                <form action="{% url 'analyzer:reset_blocked_ips' %}" method="post" style="display: inline;">
+                <form action="{% url 'analyzer:reset_all_data' %}" method="post" style="display: inline;">
                     {% csrf_token %}
-                    <button type="submit" class="action-btn danger">Разбанить все IP</button>
+                    <button type="submit" class="action-btn danger">Сбросить всё</button>
                 </form>
             </div>
         </div>
@@ -54,6 +54,7 @@
             </div>
             <div id="ai-modal-body" class="ai-modal-body">
                 <div id="ai-modal-widget-container">
+                    <div id="ai-modal-list-container"></div>
                     <canvas id="ai-modal-chart" style="display: none;"></canvas>
                 </div>
                 <div id="ai-modal-analysis-container">
